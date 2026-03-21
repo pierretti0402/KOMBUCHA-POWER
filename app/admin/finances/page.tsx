@@ -31,7 +31,7 @@ export default function FinancesPage() {
       supabase.from('orders').select('total, created_at, status').neq('status', 'cancelled'),
     ])
     setExpenses(expRes.data || [])
-    setOrders(ordRes.data || [])
+   setOrders((ordRes.data as any) || [])
     setLoading(false)
   }, [supabase])
 
