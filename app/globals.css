@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+:root {
+  --brand-pink: #FF6B9D;
+  --brand-orange: #FF8C42;
+  --brand-blue: #4FC3F7;
+  --brand-mint: #4CAF82;
+  --brand-yellow: #FFD93D;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Nunito', system-ui, sans-serif;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-pink text-white font-bold py-3 px-6 rounded-full hover:bg-opacity-90 transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-brand-pink font-bold py-3 px-6 rounded-full border-2 border-brand-pink hover:bg-brand-pink hover:text-white transition-all duration-200;
+  }
+
+  .btn-whatsapp {
+    @apply bg-green-500 text-white font-bold py-3 px-6 rounded-full hover:bg-green-600 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl font-black text-center mb-4;
+  }
+
+  .card {
+    @apply bg-white rounded-3xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300;
+  }
+
+  .gradient-bg {
+    background: linear-gradient(135deg, #FF6B9D 0%, #FF8C42 50%, #FFD93D 100%);
+  }
+
+  .admin-card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
+  }
+}
