@@ -30,7 +30,8 @@ async function getPageData() {
   ])
 
   const content: Record<string, string> = {}
-  contentRes.data?.forEach(item => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  contentRes.data?.forEach((item: any) => {
     content[item.key] = item.value
   })
 

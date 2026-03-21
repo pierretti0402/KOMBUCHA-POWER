@@ -30,8 +30,8 @@ export default function FinancesPage() {
       supabase.from('expenses').select('*').order('date', { ascending: false }),
       supabase.from('orders').select('total, created_at, status').neq('status', 'cancelled'),
     ])
-    setExpenses(expRes.data || [])
-   setOrders((ordRes.data as any) || [])
+    setExpenses((expRes.data || []) as Expense[])
+    setOrders((ordRes.data || []) as unknown as Order[])
     setLoading(false)
   }, [supabase])
 
