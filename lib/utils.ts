@@ -22,34 +22,17 @@ export function formatDate(date: string): string {
   }).format(new Date(date))
 }
 
-export function buildWhatsAppMessage(items: { name: string; quantity: number; price: number }[], customerName: string, address?: string): string {
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491176315706'
+export const PACK_SIZES = [
+  { size: 3,  label: 'Pack x3',  price: 12000 },
+  { size: 6,  label: 'Pack x6',  price: 20000 },
+  { size: 12, label: 'Pack x12', price: 36000 },
+  { size: 24, label: 'Pack x24', price: 65000 },
+]
 
-  let message = `¡Hola Power Kombucha! 🍹 Quiero hacer el siguiente pedido:\n\n`
-  message += `*Cliente:* ${customerName}\n`
-  if (address) message += `*Dirección:* ${address}\n`
-  message += `\n*Productos:*\n`
-
-  let total = 0
-  items.forEach(item => {
-    const subtotal = item.quantity * item.price
-    total += subtotal
-    message += `• ${item.name} x${item.quantity} = $${subtotal.toLocaleString('es-AR')}\n`
-  })
-
-  message += `\n*Total: $${total.toLocaleString('es-AR')}*`
-  message += `\n\n¡Gracias! 💪`
-
-  const encodedMessage = encodeURIComponent(message)
-  return `https://wa.me/${whatsappNumber}?text=${encodedMessage}`
-}
-
-export const PRODUCT_PRESENTATIONS = [
-  { label: 'Lata individual', value: 'single', multiplier: 1 },
-  { label: 'Pack x3', value: 'pack3', multiplier: 3 },
-  { label: 'Pack x6', value: 'pack6', multiplier: 6 },
-  { label: 'Pack x12', value: 'pack12', multiplier: 12 },
-  { label: 'Pack x24', value: 'pack24', multiplier: 24 },
+export const FLAVOR_NAMES = [
+  'Pomelo Rosado y Jengibre',
+  'Naranja, Frutilla y Guaraná',
+  'Manzana Verde, Guaraná y Cayena',
 ]
 
 export const ORDER_STATUSES = {

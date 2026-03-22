@@ -78,9 +78,9 @@ export default function Footer({ instagram, email }: FooterProps) {
           <div>
             <h4 className="font-black text-lg mb-4">Nuestros sabores</h4>
             <ul className="space-y-2">
-              <li className="text-gray-400 font-semibold">🍊 Naranja, Frutilla y Jengibre</li>
+              <li className="text-gray-400 font-semibold">🍊 Naranja, Frutilla y Guaraná</li>
               <li className="text-gray-400 font-semibold">🌸 Pomelo Rosado y Jengibre</li>
-              <li className="text-gray-400 font-semibold">🍎 Manzana, Menta y Limón</li>
+              <li className="text-gray-400 font-semibold">🍏 Manzana Verde, Guaraná y Cayena</li>
             </ul>
 
             <div className="mt-6">

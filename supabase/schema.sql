@@ -151,23 +151,38 @@ create table if not exists public.pickup_points (
 
 -- ============================================================
 -- DATOS INICIALES - Productos
+-- Un registro por sabor (para imagen y control de stock por lata).
+-- Los precios de pack se manejan en el frontend (PACKS constante).
+-- image_url: completar con la URL pública de Supabase Storage.
 -- ============================================================
-insert into public.products (name, flavor, presentation, stock, min_stock, cost_price, sale_price, active) values
-  ('Naranja, Frutilla y Jengibre - Lata', 'Naranja, Frutilla y Jengibre', 'Lata individual', 100, 10, 350, 750, true),
-  ('Naranja, Frutilla y Jengibre - Pack x3', 'Naranja, Frutilla y Jengibre', 'Pack x3', 30, 5, 1020, 2100, true),
-  ('Naranja, Frutilla y Jengibre - Pack x6', 'Naranja, Frutilla y Jengibre', 'Pack x6', 20, 5, 2000, 4000, true),
-  ('Naranja, Frutilla y Jengibre - Pack x12', 'Naranja, Frutilla y Jengibre', 'Pack x12', 10, 3, 3900, 7500, true),
-  ('Naranja, Frutilla y Jengibre - Pack x24', 'Naranja, Frutilla y Jengibre', 'Pack x24', 5, 2, 7500, 14000, true),
-  ('Pomelo Rosado y Jengibre - Lata', 'Pomelo Rosado y Jengibre', 'Lata individual', 100, 10, 350, 750, true),
-  ('Pomelo Rosado y Jengibre - Pack x3', 'Pomelo Rosado y Jengibre', 'Pack x3', 30, 5, 1020, 2100, true),
-  ('Pomelo Rosado y Jengibre - Pack x6', 'Pomelo Rosado y Jengibre', 'Pack x6', 20, 5, 2000, 4000, true),
-  ('Pomelo Rosado y Jengibre - Pack x12', 'Pomelo Rosado y Jengibre', 'Pack x12', 10, 3, 3900, 7500, true),
-  ('Pomelo Rosado y Jengibre - Pack x24', 'Pomelo Rosado y Jengibre', 'Pack x24', 5, 2, 7500, 14000, true),
-  ('Manzana, Menta y Limón - Lata', 'Manzana, Menta y Limón', 'Lata individual', 100, 10, 350, 750, true),
-  ('Manzana, Menta y Limón - Pack x3', 'Manzana, Menta y Limón', 'Pack x3', 30, 5, 1020, 2100, true),
-  ('Manzana, Menta y Limón - Pack x6', 'Manzana, Menta y Limón', 'Pack x6', 20, 5, 2000, 4000, true),
-  ('Manzana, Menta y Limón - Pack x12', 'Manzana, Menta y Limón', 'Pack x12', 10, 3, 3900, 7500, true),
-  ('Manzana, Menta y Limón - Pack x24', 'Manzana, Menta y Limón', 'Pack x24', 5, 2, 7500, 14000, true);
+insert into public.products (name, flavor, presentation, stock, min_stock, cost_price, sale_price, image_url, active) values
+  (
+    'Pomelo Rosado y Jengibre',
+    'Pomelo Rosado y Jengibre',
+    'Lata',
+    300, 30,
+    1500, 4000,   -- costo unitario / precio de referencia por lata
+    null,         -- reemplazar con URL de Supabase Storage
+    true
+  ),
+  (
+    'Naranja, Frutilla y Guaraná',
+    'Naranja, Frutilla y Guaraná',
+    'Lata',
+    300, 30,
+    1500, 4000,
+    null,
+    true
+  ),
+  (
+    'Manzana Verde, Guaraná y Cayena',
+    'Manzana Verde, Guaraná y Cayena',
+    'Lata',
+    300, 30,
+    1500, 4000,
+    null,
+    true
+  );
 
 -- ============================================================
 -- DATOS INICIALES - FAQ

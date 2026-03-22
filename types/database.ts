@@ -162,6 +162,24 @@ export type SiteContent = Database['public']['Tables']['site_content']['Row']
 export type FAQ = Database['public']['Tables']['faq']['Row']
 export type PickupPoint = Database['public']['Tables']['pickup_points']['Row']
 
+/** One flavor's contribution inside a mixed pack */
+export interface FlavorChoice {
+  flavorName: string
+  imageUrl: string | null
+  count: number
+}
+
+/** A pack (x3/x6/x12/x24) with a custom flavor mix in the cart */
+export interface PackCartItem {
+  cartId: string        // unique id per cart entry
+  packSize: number      // 3 | 6 | 12 | 24
+  packLabel: string     // "Pack x3"
+  price: number         // total price for ONE pack
+  quantity: number      // how many of this pack
+  flavors: FlavorChoice[]
+}
+
+/** @deprecated kept for type compatibility — replaced by PackCartItem */
 export interface CartItem {
   product: Product
   quantity: number
