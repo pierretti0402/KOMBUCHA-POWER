@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ShoppingCart, Menu, X, Instagram } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
+import PowerLogo from '@/components/ui/PowerLogo'
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -22,11 +23,8 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2">
-            <span className="text-2xl font-black bg-gradient-to-r from-[#FF6B9D] to-[#FF8C42] bg-clip-text text-transparent">
-              POWER ⚡
-            </span>
-            <span className="text-2xl font-black text-gray-800">KOMBUCHA</span>
+          <a href="#" aria-label="Power Kombucha — inicio">
+            <PowerLogo size="sm" />
           </a>
 
           {/* Desktop links */}
