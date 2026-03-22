@@ -17,11 +17,7 @@ export default function AboutUs({ title, text }: AboutUsProps) {
                 className="w-full aspect-square rounded-3xl flex items-center justify-center text-center p-10"
                 style={{ background: 'linear-gradient(135deg, #FF6B9D 0%, #FF8C42 50%, #FFD93D 100%)' }}
               >
-                <div>
-                  <div className="text-8xl mb-4">🍹</div>
-                  <p className="text-white font-black text-2xl">Hecho con ❤️</p>
-                  <p className="text-white/90 font-bold text-lg mt-1">en Argentina 🇦🇷</p>
-                </div>
+                <div className="text-[10rem] leading-none select-none">🍹</div>
               </div>
               {/* Floating badges */}
               <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-xl p-4 rotate-6">
