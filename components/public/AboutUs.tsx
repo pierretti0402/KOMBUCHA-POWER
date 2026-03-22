@@ -9,30 +9,8 @@ export default function AboutUs({ title, text }: AboutUsProps) {
   return (
     <section id="nosotros" className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          {/* Image/illustration side */}
-          <div className="order-2 md:order-1">
-            <div className="relative">
-              <div
-                className="w-full aspect-square rounded-3xl flex items-center justify-center text-center p-10"
-                style={{ background: 'linear-gradient(135deg, #FF6B9D 0%, #FF8C42 50%, #FFD93D 100%)' }}
-              >
-                <div className="text-[10rem] leading-none select-none">🍹</div>
-              </div>
-              {/* Floating badges */}
-              <div className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-xl p-4 rotate-6">
-                <span className="text-2xl">🌿</span>
-                <p className="text-xs font-black text-gray-800 mt-1">100% Orgánico</p>
-              </div>
-              <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-xl p-4 -rotate-6">
-                <span className="text-2xl">⚡</span>
-                <p className="text-xs font-black text-gray-800 mt-1">Artesanal</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Text side */}
-          <div className="order-1 md:order-2">
+        <div className="max-w-3xl mx-auto">
+          <div>
             <span className="text-[#FF6B9D] font-bold text-lg uppercase tracking-wide">Quiénes somos</span>
             <h2 className="text-4xl md:text-5xl font-black text-gray-900 mt-2 mb-6">{title}</h2>
             <div className="space-y-4">
