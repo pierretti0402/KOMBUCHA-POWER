@@ -33,7 +33,7 @@ export default function Footer({ instagram, email }: FooterProps) {
                 <Instagram size={18} />
               </a>
               <a
-                href="https://wa.me/5491176315706"
+                href="https://wa.me/5491135170335"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 bg-white/10 hover:bg-green-500 rounded-xl flex items-center justify-center transition-colors"

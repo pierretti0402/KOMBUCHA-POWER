@@ -71,7 +71,7 @@
 NEXT_PUBLIC_SUPABASE_URL = https://tuproyecto.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY = tu-clave-anon-aqui
 SUPABASE_SERVICE_ROLE_KEY = tu-clave-service-role-aqui
-NEXT_PUBLIC_WHATSAPP_NUMBER = 5491176315706
+NEXT_PUBLIC_WHATSAPP_NUMBER = 5491135170335
 ```
 
 5. Hacé clic en **"Deploy"**

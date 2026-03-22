@@ -208,7 +208,7 @@ insert into public.site_content (key, value) values
   ('delivery_text', 'Enviamos a toda la zona del AMBA. Para pedidos al interior del país, consultá por WhatsApp. También podés retirar en nuestros puntos de pick up.'),
   ('contact_email', 'hola@powerkombucha.com.ar'),
   ('instagram_url', 'https://www.instagram.com/powerkombucha'),
-  ('whatsapp_number', '5491176315706');
+  ('whatsapp_number', '5491135170335');
 
 -- ============================================================
 -- DATOS INICIALES - Puntos de pick up

@@ -65,7 +65,7 @@ export default function FAQSection({ faqs }: FAQSectionProps) {
         <div className="text-center mt-10">
           <p className="text-gray-600 font-semibold mb-4">¿Tenés otra pregunta?</p>
           <a
-            href={`https://wa.me/5491176315706?text=Hola!%20Tengo%20una%20consulta%20sobre%20Power%20Kombucha`}
+            href={`https://wa.me/5491135170335?text=Hola!%20Tengo%20una%20consulta%20sobre%20Power%20Kombucha`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-green-500 text-white font-bold px-6 py-3 rounded-full hover:bg-green-600 transition-colors"

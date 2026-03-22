@@ -24,7 +24,7 @@ export default function Cart() {
       return
     }
 
-    const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491176315706'
+    const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491135170335'
     let msg = `¡Hola Power Kombucha! ⚡🍹 Quiero hacer el siguiente pedido:\n\n`
     msg += `*Cliente:* ${customerName}\n`
     const addr = deliveryType === 'pickup'

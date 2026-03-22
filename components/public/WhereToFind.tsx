@@ -29,7 +29,7 @@ export default function WhereToFind({ pickupPoints, deliveryText }: WhereToFindP
             <h3 className="text-2xl font-black text-gray-900 mb-3">Envío a domicilio</h3>
             <p className="text-gray-600 font-semibold leading-relaxed mb-4">{deliveryText}</p>
             <a
-              href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491176315706'}?text=Hola!%20Quiero%20consultar%20sobre%20env%C3%ADo%20a%20domicilio`}
+              href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491135170335'}?text=Hola!%20Quiero%20consultar%20sobre%20env%C3%ADo%20a%20domicilio`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-green-500 text-white font-bold px-5 py-3 rounded-full hover:bg-green-600 transition-colors"

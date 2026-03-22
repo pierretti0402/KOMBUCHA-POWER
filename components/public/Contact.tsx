@@ -60,7 +60,7 @@ export default function Contact({ email, instagram }: ContactProps) {
 
               <div className="space-y-4">
                 <a
-                  href={`https://wa.me/5491176315706?text=Hola%20Power%20Kombucha!%20🍹`}
+                  href={`https://wa.me/5491135170335?text=Hola%20Power%20Kombucha!%20🍹`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-4 p-4 bg-green-50 border-2 border-green-100 rounded-2xl hover:border-green-300 transition-colors group"
@@ -70,7 +70,7 @@ export default function Contact({ email, instagram }: ContactProps) {
                   </div>
                   <div>
                     <p className="font-black text-gray-900">WhatsApp</p>
-                    <p className="text-gray-600 text-sm font-semibold">+54 9 11 7631-5706</p>
+                    <p className="text-gray-600 text-sm font-semibold">+54 9 11 3517-0335</p>
                   </div>
                 </a>
 
