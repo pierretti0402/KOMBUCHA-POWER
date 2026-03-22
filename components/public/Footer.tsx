@@ -21,7 +21,7 @@ export default function Footer({ instagram, email }: FooterProps) {
               <span className="text-3xl font-black text-white">KOMBUCHA</span>
             </div>
             <p className="text-gray-400 font-semibold mb-4">
-              La gaseosa del futuro. Hecha con amor en Argentina. 🇦🇷
+              La gaseosa del futuro.
             </p>
             <div className="flex gap-4">
               <a
@@ -101,7 +101,7 @@ export default function Footer({ instagram, email }: FooterProps) {
             © {currentYear} Power Kombucha. Todos los derechos reservados.
           </p>
           <p className="text-gray-500 text-sm font-semibold">
-            Hecho con ❤️ en Argentina
+            Power Kombucha Argentina
           </p>
         </div>
       </div>

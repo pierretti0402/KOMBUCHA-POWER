@@ -28,8 +28,7 @@ export default function PowerLogo({
         style={{ backgroundColor: circleColor }}
       >
         <span
-          style={{ fontFamily: "'Fredoka One', cursive" }}
-          className={`text-[#FF6B9D] leading-none ${isLg ? 'text-5xl' : 'text-base'}`}
+          className={`text-[#FF6B9D] font-black leading-none ${isLg ? 'text-5xl' : 'text-base'}`}
         >
           power
         </span>
@@ -37,8 +36,7 @@ export default function PowerLogo({
 
       {/* KOMBUCHA label */}
       <span
-        style={{ fontFamily: "'Fredoka One', cursive" }}
-        className={`text-[#FF6B9D] tracking-widest leading-none ${
+        className={`text-[#FF6B9D] font-black tracking-widest leading-none ${
           isLg ? 'text-2xl' : 'text-[9px]'
         }`}
       >

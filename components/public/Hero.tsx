@@ -51,10 +51,9 @@ export default function Hero() {
 
         {/* Tagline */}
         <p
-          className="text-3xl md:text-4xl font-bold mb-4 animate-fade-in-up"
+          className="text-3xl md:text-4xl font-black mb-4 animate-fade-in-up"
           style={{
             animationDelay: '0.25s',
-            fontFamily: "'Fredoka One', cursive",
             textShadow: '0 2px 12px rgba(0,0,0,0.5)',
           }}
         >
@@ -73,7 +72,7 @@ export default function Hero() {
           className="text-lg md:text-xl mb-10 opacity-90 max-w-2xl mx-auto font-semibold animate-fade-in-up"
           style={{ animationDelay: '0.4s', textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}
         >
-          Fermentada con amor en Argentina 🇦🇷 · Sabores únicos que te van a volar la cabeza
+          Sabores únicos que te van a volar la cabeza
         </p>
 
         {/* CTA buttons */}
