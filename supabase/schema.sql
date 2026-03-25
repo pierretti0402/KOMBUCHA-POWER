@@ -150,6 +150,19 @@ create table if not exists public.pickup_points (
 );
 
 -- ============================================================
+-- TABLA: abandoned_carts
+-- ============================================================
+create table if not exists public.abandoned_carts (
+  id uuid default uuid_generate_v4() primary key,
+  email text not null,
+  customer_name text not null,
+  items jsonb not null default '[]',
+  total numeric(12,2) not null default 0,
+  recovered boolean not null default false,
+  created_at timestamptz default now()
+);
+
+-- ============================================================
 -- DATOS INICIALES - Productos
 -- Un registro por sabor (para imagen y control de stock por lata).
 -- Los precios de pack se manejan en el frontend (PACKS constante).
@@ -232,6 +245,7 @@ alter table public.campaigns enable row level security;
 alter table public.site_content enable row level security;
 alter table public.faq enable row level security;
 alter table public.pickup_points enable row level security;
+alter table public.abandoned_carts enable row level security;
 
 -- Políticas: lectura pública para tablas del sitio
 create policy "public read products" on public.products for select using (active = true);
@@ -241,6 +255,10 @@ create policy "public read pickup_points" on public.pickup_points for select usi
 
 -- Políticas: escritura pública para órdenes (clientes pueden crear pedidos)
 create policy "public insert orders" on public.orders for insert with check (true);
+
+-- Políticas: abandoned_carts (escritura pública para clientes, admin para leer)
+create policy "public insert abandoned_carts" on public.abandoned_carts for insert with check (true);
+create policy "public update abandoned_carts" on public.abandoned_carts for update using (true);
 
 -- Políticas: acceso completo para usuarios autenticados (admin)
 create policy "admin all products" on public.products for all using (auth.role() = 'authenticated');

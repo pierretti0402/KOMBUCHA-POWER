@@ -2,41 +2,87 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { X, ShoppingCart, Plus, Minus, Trash2, MessageCircle } from 'lucide-react'
+import { X, ShoppingCart, Plus, Minus, Trash2, MessageCircle, ArrowRight } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { formatCurrency } from '@/lib/utils'
 import { FLAVOR_META } from '@/components/public/Flavors'
 
 export default function Cart() {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, total, itemCount } = useCart()
+
+  // Step 1 fields
   const [customerName, setCustomerName] = useState('')
+  const [customerEmail, setCustomerEmail] = useState('')
+
+  // Step 2 fields
   const [customerPhone, setCustomerPhone] = useState('')
   const [customerAddress, setCustomerAddress] = useState('')
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery')
   const [paymentMethod, setPaymentMethod] = useState<'transfer' | 'cash'>('transfer')
+
+  const [step, setStep] = useState<1 | 2>(1)
+  const [abandonedCartId, setAbandonedCartId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
   if (!isOpen) return null
 
   const cashTotal = Math.round(total * 0.9)
 
-  const handleWhatsApp = async () => {
+  // Step 1 → save abandoned cart and advance to step 2
+  const handleContinue = async () => {
     if (!customerName.trim()) {
       alert('Por favor ingresá tu nombre')
       return
     }
+    if (!customerEmail.trim() || !customerEmail.includes('@')) {
+      alert('Por favor ingresá un email válido')
+      return
+    }
 
-    const displayTotal = paymentMethod === 'cash' ? cashTotal : total
-
-    // Save order to Supabase before opening WhatsApp
     setIsSaving(true)
     try {
+      const res = await fetch('/api/abandoned-carts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: customerEmail.trim(),
+          customer_name: customerName.trim(),
+          items: items.map(item => ({
+            packLabel: item.packLabel,
+            packSize: item.packSize,
+            quantity: item.quantity,
+            price: item.price,
+            flavors: item.flavors.map(f => ({ flavorName: f.flavorName, count: f.count })),
+            subtotal: item.price * item.quantity,
+          })),
+          total,
+        }),
+      })
+      const data = await res.json()
+      if (data.id) setAbandonedCartId(data.id)
+    } catch {
+      // Silent fail — still proceed to step 2
+    } finally {
+      setIsSaving(false)
+    }
+
+    setStep(2)
+  }
+
+  // Step 2 → save order, mark cart recovered, open WhatsApp
+  const handleWhatsApp = async () => {
+    const displayTotal = paymentMethod === 'cash' ? cashTotal : total
+
+    setIsSaving(true)
+    try {
+      // Save order to Supabase
       await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customer_name: customerName.trim(),
           customer_phone: customerPhone.trim(),
+          customer_email: customerEmail.trim(),
           customer_address: deliveryType === 'pickup'
             ? `PICK UP (${customerAddress || 'a coordinar'})`
             : customerAddress,
@@ -52,8 +98,17 @@ export default function Cart() {
           notes: `Pago: ${paymentMethod === 'cash' ? 'Efectivo (10% OFF)' : 'Transferencia'} | Entrega: ${deliveryType}`,
         }),
       })
+
+      // Mark abandoned cart as recovered
+      if (abandonedCartId) {
+        await fetch('/api/abandoned-carts', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: abandonedCartId }),
+        })
+      }
     } catch {
-      // Silent fail - don't block WhatsApp redirect if API is unavailable
+      // Silent fail
     } finally {
       setIsSaving(false)
     }
@@ -62,6 +117,7 @@ export default function Cart() {
     let msg = `¡Hola Power Kombucha! ⚡🍹 Quiero hacer el siguiente pedido:\n\n`
     msg += `*Cliente:* ${customerName}\n`
     if (customerPhone.trim()) msg += `*Teléfono:* ${customerPhone}\n`
+    if (customerEmail.trim()) msg += `*Email:* ${customerEmail}\n`
     const addr = deliveryType === 'pickup'
       ? `PICK UP (${customerAddress || 'a coordinar'})`
       : customerAddress
@@ -192,71 +248,113 @@ export default function Cart() {
               </div>
             </div>
 
-            {/* Payment method */}
-            <div className="flex gap-3">
-              {(['transfer', 'cash'] as const).map(method => (
+            {/* Step indicator */}
+            <div className="flex items-center gap-2">
+              <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-black ${step === 1 ? 'bg-[#FF6B9D] text-white' : 'bg-green-500 text-white'}`}>
+                {step === 1 ? '1' : '✓'}
+              </div>
+              <div className={`flex-1 h-0.5 ${step === 2 ? 'bg-[#FF6B9D]' : 'bg-gray-200'}`} />
+              <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-black ${step === 2 ? 'bg-[#FF6B9D] text-white' : 'bg-gray-200 text-gray-400'}`}>
+                2
+              </div>
+            </div>
+
+            {step === 1 ? (
+              /* ── Step 1: name + email ── */
+              <div className="space-y-3">
+                <p className="text-sm font-black text-gray-700">Tu información</p>
+                <input
+                  type="text"
+                  placeholder="Tu nombre *"
+                  value={customerName}
+                  onChange={e => setCustomerName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold text-sm transition-colors"
+                />
+                <input
+                  type="email"
+                  placeholder="Tu email *"
+                  value={customerEmail}
+                  onChange={e => setCustomerEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold text-sm transition-colors"
+                />
                 <button
-                  key={method}
-                  onClick={() => setPaymentMethod(method)}
-                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${
-                    paymentMethod === method
-                      ? method === 'cash' ? 'bg-green-500 text-white' : 'bg-[#FF6B9D] text-white'
-                      : 'bg-gray-100 text-gray-600'
-                  }`}
+                  onClick={handleContinue}
+                  disabled={isSaving}
+                  className="w-full flex items-center justify-center gap-3 bg-[#FF6B9D] text-white font-black text-lg py-4 rounded-full hover:bg-opacity-90 transition-colors shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {method === 'cash' ? '💵 Efectivo' : '🏦 Transferencia'}
+                  {isSaving ? 'Un momento...' : 'Continuar'}
+                  {!isSaving && <ArrowRight size={20} />}
                 </button>
-              ))}
-            </div>
+                <p className="text-center text-xs text-gray-400 font-semibold">
+                  Tu email solo se usa para recordarte tu pedido si lo dejás sin completar.
+                </p>
+              </div>
+            ) : (
+              /* ── Step 2: delivery + payment + WhatsApp ── */
+              <div className="space-y-3">
+                <p className="text-sm font-black text-gray-700">Entrega y pago</p>
 
-            {/* Customer info */}
-            <input
-              type="text"
-              placeholder="Tu nombre *"
-              value={customerName}
-              onChange={e => setCustomerName(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold text-sm transition-colors"
-            />
-            <input
-              type="tel"
-              placeholder="Tu teléfono / WhatsApp"
-              value={customerPhone}
-              onChange={e => setCustomerPhone(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold text-sm transition-colors"
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={() => setDeliveryType('delivery')}
-                className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${deliveryType === 'delivery' ? 'bg-[#FF6B9D] text-white' : 'bg-gray-100 text-gray-600'}`}
-              >
-                🚚 Envío
-              </button>
-              <button
-                onClick={() => setDeliveryType('pickup')}
-                className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${deliveryType === 'pickup' ? 'bg-[#FF6B9D] text-white' : 'bg-gray-100 text-gray-600'}`}
-              >
-                📍 Pick Up
-              </button>
-            </div>
-            <input
-              type="text"
-              placeholder={deliveryType === 'delivery' ? 'Dirección de envío' : 'Punto de pick up preferido'}
-              value={customerAddress}
-              onChange={e => setCustomerAddress(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold text-sm transition-colors"
-            />
+                {/* Payment method */}
+                <div className="flex gap-3">
+                  {(['transfer', 'cash'] as const).map(method => (
+                    <button
+                      key={method}
+                      onClick={() => setPaymentMethod(method)}
+                      className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${
+                        paymentMethod === method
+                          ? method === 'cash' ? 'bg-green-500 text-white' : 'bg-[#FF6B9D] text-white'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {method === 'cash' ? '💵 Efectivo' : '🏦 Transferencia'}
+                    </button>
+                  ))}
+                </div>
 
-            <button
-              onClick={handleWhatsApp}
-              disabled={isSaving}
-              className="w-full flex items-center justify-center gap-3 bg-green-500 text-white font-black text-lg py-4 rounded-full hover:bg-green-600 transition-colors shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              <MessageCircle size={22} />
-              {isSaving ? 'Guardando pedido...' : 'Confirmar por WhatsApp'}
-            </button>
-            <p className="text-center text-xs text-gray-400 font-semibold">
-              Te abrimos WhatsApp con el pedido armado. ¡Solo lo enviás!
-            </p>
+                <input
+                  type="tel"
+                  placeholder="Tu teléfono / WhatsApp"
+                  value={customerPhone}
+                  onChange={e => setCustomerPhone(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold text-sm transition-colors"
+                />
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setDeliveryType('delivery')}
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${deliveryType === 'delivery' ? 'bg-[#FF6B9D] text-white' : 'bg-gray-100 text-gray-600'}`}
+                  >
+                    🚚 Envío
+                  </button>
+                  <button
+                    onClick={() => setDeliveryType('pickup')}
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${deliveryType === 'pickup' ? 'bg-[#FF6B9D] text-white' : 'bg-gray-100 text-gray-600'}`}
+                  >
+                    📍 Pick Up
+                  </button>
+                </div>
+
+                <input
+                  type="text"
+                  placeholder={deliveryType === 'delivery' ? 'Dirección de envío' : 'Punto de pick up preferido'}
+                  value={customerAddress}
+                  onChange={e => setCustomerAddress(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold text-sm transition-colors"
+                />
+
+                <button
+                  onClick={handleWhatsApp}
+                  disabled={isSaving}
+                  className="w-full flex items-center justify-center gap-3 bg-green-500 text-white font-black text-lg py-4 rounded-full hover:bg-green-600 transition-colors shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  <MessageCircle size={22} />
+                  {isSaving ? 'Guardando pedido...' : 'Confirmar por WhatsApp'}
+                </button>
+                <p className="text-center text-xs text-gray-400 font-semibold">
+                  Te abrimos WhatsApp con el pedido armado. ¡Solo lo enviás!
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>

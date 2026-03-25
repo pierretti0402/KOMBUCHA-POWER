@@ -146,6 +146,19 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['pickup_points']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['pickup_points']['Insert']>
       }
+      abandoned_carts: {
+        Row: {
+          id: string
+          email: string
+          customer_name: string
+          items: Json
+          total: number
+          recovered: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['abandoned_carts']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['abandoned_carts']['Insert']>
+      }
     }
   }
 }
@@ -161,6 +174,7 @@ export type Campaign = Database['public']['Tables']['campaigns']['Row']
 export type SiteContent = Database['public']['Tables']['site_content']['Row']
 export type FAQ = Database['public']['Tables']['faq']['Row']
 export type PickupPoint = Database['public']['Tables']['pickup_points']['Row']
+export type AbandonedCart = Database['public']['Tables']['abandoned_carts']['Row']
 
 /** One flavor's contribution inside a mixed pack */
 export interface FlavorChoice {
