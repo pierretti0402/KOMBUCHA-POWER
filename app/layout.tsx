@@ -1,6 +1,19 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
+import { Fuzzy_Bubbles, Fredoka } from 'next/font/google'
+
+const fuzzyBubbles = Fuzzy_Bubbles({
+  weight: ['400', '700'],
+  subsets: ['latin'],
+  variable: '--font-fuzzy-bubbles',
+})
+
+const fredoka = Fredoka({
+  weight: ['400', '600'],
+  subsets: ['latin'],
+  variable: '--font-fredoka',
+})
 
 export const metadata: Metadata = {
   title: 'Power Kombucha - La gaseosa del futuro',
@@ -19,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
+    <html lang="es" className={`${fuzzyBubbles.variable} ${fredoka.variable}`}>
       <body>
         {children}
         <Toaster

@@ -29,6 +29,7 @@ export default function PowerLogo({
       >
         <span
           className={`text-[#FF6B9D] font-black leading-none ${isLg ? 'text-5xl' : 'text-base'}`}
+          style={{ fontFamily: 'var(--font-fuzzy-bubbles), sans-serif' }}
         >
           power
         </span>
@@ -36,9 +37,10 @@ export default function PowerLogo({
 
       {/* KOMBUCHA label */}
       <span
-        className={`text-[#FF6B9D] font-black tracking-widest leading-none ${
+        className={`text-[#FF6B9D] font-semibold tracking-widest leading-none ${
           isLg ? 'text-2xl' : 'text-[9px]'
         }`}
+        style={{ fontFamily: 'var(--font-fredoka), sans-serif' }}
       >
         KOMBUCHA
       </span>
