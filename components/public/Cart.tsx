@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { X, ShoppingCart, Plus, Minus, Trash2, MessageCircle, ArrowRight } from 'lucide-react'
+import { X, ShoppingCart, Plus, Minus, Trash2, MessageCircle, ArrowRight, AlertCircle } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { formatCurrency } from '@/lib/utils'
 import { FLAVOR_META } from '@/components/public/Flavors'
+import { supabase } from '@/lib/supabase'
 
 export default function Cart() {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, total, itemCount } = useCart()
@@ -23,12 +24,39 @@ export default function Cart() {
   const [step, setStep] = useState<1 | 2>(1)
   const [abandonedCartId, setAbandonedCartId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [stockByFlavor, setStockByFlavor] = useState<Record<string, number>>({})
+  const [stockError, setStockError] = useState<string | null>(null)
+
+  // Fetch current stock whenever the cart opens
+  useEffect(() => {
+    if (!isOpen) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(supabase as any)
+      .from('products')
+      .select('flavor, stock')
+      .eq('active', true)
+      .then(({ data }: { data: Array<{ flavor: string; stock: number }> | null }) => {
+        if (data) {
+          const map: Record<string, number> = {}
+          data.forEach(p => { map[p.flavor] = p.stock })
+          setStockByFlavor(map)
+        }
+      })
+  }, [isOpen])
 
   if (!isOpen) return null
 
   const cashTotal = Math.round(total * 0.9)
 
-  // Step 1 → save abandoned cart and advance to step 2
+  // Compute total units needed per flavor across all cart items
+  const flavorTotals: Record<string, number> = {}
+  for (const item of items) {
+    for (const f of item.flavors) {
+      flavorTotals[f.flavorName] = (flavorTotals[f.flavorName] || 0) + f.count * item.quantity
+    }
+  }
+
+  // Step 1 → validate stock + save abandoned cart → step 2
   const handleContinue = async () => {
     if (!customerName.trim()) {
       alert('Por favor ingresá tu nombre')
@@ -38,6 +66,20 @@ export default function Cart() {
       alert('Por favor ingresá un email válido')
       return
     }
+
+    // Stock check against freshly fetched data
+    const insufficient: string[] = []
+    for (const [flavorName, needed] of Object.entries(flavorTotals)) {
+      const available = stockByFlavor[flavorName] ?? 0
+      if (needed > available) {
+        insufficient.push(`${flavorName.split(',')[0]}: necesitás ${needed}, disponibles ${available}`)
+      }
+    }
+    if (insufficient.length > 0) {
+      setStockError(`No hay suficiente stock para completar tu pedido:\n• ${insufficient.join('\n• ')}`)
+      return
+    }
+    setStockError(null)
 
     setIsSaving(true)
     try {
@@ -61,7 +103,7 @@ export default function Cart() {
       const data = await res.json()
       if (data.id) setAbandonedCartId(data.id)
     } catch {
-      // Silent fail — still proceed to step 2
+      // Silent fail — still proceed
     } finally {
       setIsSaving(false)
     }
@@ -69,51 +111,12 @@ export default function Cart() {
     setStep(2)
   }
 
-  // Step 2 → save order, mark cart recovered, open WhatsApp
-  const handleWhatsApp = async () => {
+  // Step 2 → open WhatsApp immediately (sync), then save to DB in background
+  const handleWhatsApp = () => {
     const displayTotal = paymentMethod === 'cash' ? cashTotal : total
-
-    setIsSaving(true)
-    try {
-      // Save order to Supabase
-      await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_name: customerName.trim(),
-          customer_phone: customerPhone.trim(),
-          customer_email: customerEmail.trim(),
-          customer_address: deliveryType === 'pickup'
-            ? `PICK UP (${customerAddress || 'a coordinar'})`
-            : customerAddress,
-          items: items.map(item => ({
-            packLabel: item.packLabel,
-            packSize: item.packSize,
-            quantity: item.quantity,
-            price: item.price,
-            flavors: item.flavors.map(f => ({ flavorName: f.flavorName, count: f.count })),
-            subtotal: item.price * item.quantity,
-          })),
-          total: displayTotal,
-          notes: `Pago: ${paymentMethod === 'cash' ? 'Efectivo (10% OFF)' : 'Transferencia'} | Entrega: ${deliveryType}`,
-        }),
-      })
-
-      // Mark abandoned cart as recovered
-      if (abandonedCartId) {
-        await fetch('/api/abandoned-carts', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: abandonedCartId }),
-        })
-      }
-    } catch {
-      // Silent fail
-    } finally {
-      setIsSaving(false)
-    }
-
     const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491135170335'
+
+    // Build message synchronously
     let msg = `¡Hola Power Kombucha! ⚡🍹 Quiero hacer el siguiente pedido:\n\n`
     msg += `*Cliente:* ${customerName}\n`
     if (customerPhone.trim()) msg += `*Teléfono:* ${customerPhone}\n`
@@ -140,7 +143,44 @@ export default function Cart() {
     if (paymentMethod === 'cash') msg += ` _(10% OFF en efectivo)_`
     msg += `\n\n¡Gracias! 💪`
 
+    // ⚡ Open WhatsApp SYNCHRONOUSLY — must happen before any await to avoid popup blocker
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, '_blank')
+
+    // Save order + mark cart recovered in background (fire-and-forget)
+    setIsSaving(true)
+    const orderPayload = {
+      customer_name: customerName.trim(),
+      customer_phone: customerPhone.trim(),
+      customer_email: customerEmail.trim(),
+      customer_address: deliveryType === 'pickup'
+        ? `PICK UP (${customerAddress || 'a coordinar'})`
+        : customerAddress,
+      items: items.map(item => ({
+        packLabel: item.packLabel,
+        packSize: item.packSize,
+        quantity: item.quantity,
+        price: item.price,
+        flavors: item.flavors.map(f => ({ flavorName: f.flavorName, count: f.count })),
+        subtotal: item.price * item.quantity,
+      })),
+      total: displayTotal,
+      notes: `Pago: ${paymentMethod === 'cash' ? 'Efectivo (10% OFF)' : 'Transferencia'} | Entrega: ${deliveryType}`,
+    }
+
+    Promise.all([
+      fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderPayload),
+      }),
+      abandonedCartId
+        ? fetch('/api/abandoned-carts', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: abandonedCartId }),
+          })
+        : Promise.resolve(),
+    ]).finally(() => setIsSaving(false))
   }
 
   return (
@@ -173,7 +213,6 @@ export default function Cart() {
             <div className="space-y-4">
               {items.map(item => (
                 <div key={item.cartId} className="bg-gray-50 rounded-2xl p-4">
-                  {/* Pack header */}
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <p className="font-black text-gray-900">{item.packLabel}</p>
@@ -207,7 +246,6 @@ export default function Cart() {
                     </div>
                   </div>
 
-                  {/* Flavor breakdown */}
                   <div className="flex flex-wrap gap-2">
                     {item.flavors.map(f => {
                       const meta = FLAVOR_META[f.flavorName]
@@ -263,6 +301,14 @@ export default function Cart() {
               /* ── Step 1: name + email ── */
               <div className="space-y-3">
                 <p className="text-sm font-black text-gray-700">Tu información</p>
+
+                {stockError && (
+                  <div className="flex gap-2 bg-red-50 border border-red-200 rounded-xl p-3">
+                    <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs font-bold text-red-700 whitespace-pre-line">{stockError}</p>
+                  </div>
+                )}
+
                 <input
                   type="text"
                   placeholder="Tu nombre *"
@@ -292,7 +338,15 @@ export default function Cart() {
             ) : (
               /* ── Step 2: delivery + payment + WhatsApp ── */
               <div className="space-y-3">
-                <p className="text-sm font-black text-gray-700">Entrega y pago</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-black text-gray-700">Entrega y pago</p>
+                  <button
+                    onClick={() => setStep(1)}
+                    className="text-xs font-bold text-[#FF6B9D] hover:underline"
+                  >
+                    ← Volver
+                  </button>
+                </div>
 
                 {/* Payment method */}
                 <div className="flex gap-3">
@@ -344,11 +398,10 @@ export default function Cart() {
 
                 <button
                   onClick={handleWhatsApp}
-                  disabled={isSaving}
-                  className="w-full flex items-center justify-center gap-3 bg-green-500 text-white font-black text-lg py-4 rounded-full hover:bg-green-600 transition-colors shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-3 bg-green-500 text-white font-black text-lg py-4 rounded-full hover:bg-green-600 transition-colors shadow-lg"
                 >
                   <MessageCircle size={22} />
-                  {isSaving ? 'Guardando pedido...' : 'Confirmar por WhatsApp'}
+                  Confirmar por WhatsApp
                 </button>
                 <p className="text-center text-xs text-gray-400 font-semibold">
                   Te abrimos WhatsApp con el pedido armado. ¡Solo lo enviás!

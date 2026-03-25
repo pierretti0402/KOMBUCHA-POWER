@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { Search, Filter, Download, ChevronDown } from 'lucide-react'
+import { Search, Filter, Download, ChevronDown, Trash2 } from 'lucide-react'
 import { formatCurrency, formatDate, ORDER_STATUSES } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import type { Order } from '@/types/database'
@@ -31,6 +31,17 @@ export default function OrdersPage() {
     if (!error) {
       toast.success('Estado actualizado ✅')
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o))
+    }
+  }
+
+  const deleteOrder = async (orderId: string) => {
+    if (!confirm('¿Eliminár este pedido permanentemente? Esta acción no se puede deshacer.')) return
+    const { error } = await supabase.from('orders').delete().eq('id', orderId)
+    if (!error) {
+      toast.success('Pedido eliminado ✅')
+      setOrders(prev => prev.filter(o => o.id !== orderId))
+    } else {
+      toast.error('Error al eliminar')
     }
   }
 
@@ -191,6 +202,19 @@ export default function OrdersPage() {
                       </button>
                     ))}
                   </div>
+
+                  {/* Delete — only for cancelled orders */}
+                  {order.status === 'cancelled' && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <button
+                        onClick={() => deleteOrder(order.id)}
+                        className="flex items-center gap-2 text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-full transition-colors"
+                      >
+                        <Trash2 size={13} />
+                        Eliminar pedido permanentemente
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -13,11 +13,11 @@ export default async function AdminDashboard() {
   const startOfWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
   const [ordersToday, ordersPending, productsLowStock, ordersMonth, ordersWeek, allProducts] = await Promise.all([
-    supabase.from('orders').select('total').gte('created_at', today),
+    supabase.from('orders').select('total').gte('created_at', today).in('status', ['confirmed', 'shipped', 'delivered']),
     supabase.from('orders').select('id', { count: 'exact' }).eq('status', 'pending'),
     supabase.from('products').select('*').filter('stock', 'lte', 'min_stock').eq('active', true),
-    supabase.from('orders').select('total, created_at').gte('created_at', startOfMonth),
-    supabase.from('orders').select('total, created_at').gte('created_at', startOfWeek),
+    supabase.from('orders').select('total, created_at').gte('created_at', startOfMonth).in('status', ['confirmed', 'shipped', 'delivered']),
+    supabase.from('orders').select('total, created_at').gte('created_at', startOfWeek).in('status', ['confirmed', 'shipped', 'delivered']),
     supabase.from('products').select('*').eq('active', true),
   ])
 
