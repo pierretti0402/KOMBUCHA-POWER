@@ -10,23 +10,58 @@ import { FLAVOR_META } from '@/components/public/Flavors'
 export default function Cart() {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, total, itemCount } = useCart()
   const [customerName, setCustomerName] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
   const [customerAddress, setCustomerAddress] = useState('')
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery')
   const [paymentMethod, setPaymentMethod] = useState<'transfer' | 'cash'>('transfer')
+  const [isSaving, setIsSaving] = useState(false)
 
   if (!isOpen) return null
 
   const cashTotal = Math.round(total * 0.9)
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
     if (!customerName.trim()) {
       alert('Por favor ingresá tu nombre')
       return
     }
 
+    const displayTotal = paymentMethod === 'cash' ? cashTotal : total
+
+    // Save order to Supabase before opening WhatsApp
+    setIsSaving(true)
+    try {
+      await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_name: customerName.trim(),
+          customer_phone: customerPhone.trim(),
+          customer_address: deliveryType === 'pickup'
+            ? `PICK UP (${customerAddress || 'a coordinar'})`
+            : customerAddress,
+          items: items.map(item => ({
+            packLabel: item.packLabel,
+            packSize: item.packSize,
+            quantity: item.quantity,
+            price: item.price,
+            flavors: item.flavors.map(f => ({ flavorName: f.flavorName, count: f.count })),
+            subtotal: item.price * item.quantity,
+          })),
+          total: displayTotal,
+          notes: `Pago: ${paymentMethod === 'cash' ? 'Efectivo (10% OFF)' : 'Transferencia'} | Entrega: ${deliveryType}`,
+        }),
+      })
+    } catch {
+      // Silent fail - don't block WhatsApp redirect if API is unavailable
+    } finally {
+      setIsSaving(false)
+    }
+
     const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491135170335'
     let msg = `¡Hola Power Kombucha! ⚡🍹 Quiero hacer el siguiente pedido:\n\n`
     msg += `*Cliente:* ${customerName}\n`
+    if (customerPhone.trim()) msg += `*Teléfono:* ${customerPhone}\n`
     const addr = deliveryType === 'pickup'
       ? `PICK UP (${customerAddress || 'a coordinar'})`
       : customerAddress
@@ -45,7 +80,6 @@ export default function Cart() {
       msg += `  Subtotal: *${formatCurrency(lineTotal)}*\n`
     })
 
-    const displayTotal = paymentMethod === 'cash' ? cashTotal : total
     msg += `\n*TOTAL: ${formatCurrency(displayTotal)}*`
     if (paymentMethod === 'cash') msg += ` _(10% OFF en efectivo)_`
     msg += `\n\n¡Gracias! 💪`
@@ -183,6 +217,13 @@ export default function Cart() {
               onChange={e => setCustomerName(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold text-sm transition-colors"
             />
+            <input
+              type="tel"
+              placeholder="Tu teléfono / WhatsApp"
+              value={customerPhone}
+              onChange={e => setCustomerPhone(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold text-sm transition-colors"
+            />
             <div className="flex gap-3">
               <button
                 onClick={() => setDeliveryType('delivery')}
@@ -207,10 +248,11 @@ export default function Cart() {
 
             <button
               onClick={handleWhatsApp}
-              className="w-full flex items-center justify-center gap-3 bg-green-500 text-white font-black text-lg py-4 rounded-full hover:bg-green-600 transition-colors shadow-lg"
+              disabled={isSaving}
+              className="w-full flex items-center justify-center gap-3 bg-green-500 text-white font-black text-lg py-4 rounded-full hover:bg-green-600 transition-colors shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <MessageCircle size={22} />
-              Confirmar por WhatsApp
+              {isSaving ? 'Guardando pedido...' : 'Confirmar por WhatsApp'}
             </button>
             <p className="text-center text-xs text-gray-400 font-semibold">
               Te abrimos WhatsApp con el pedido armado. ¡Solo lo enviás!
