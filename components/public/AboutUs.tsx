@@ -25,7 +25,7 @@ export default function AboutUs({ title, text }: AboutUsProps) {
             <div className="grid grid-cols-2 gap-4 mt-8">
               {[
                 { icon: '🌿', label: 'Orgánica' },
-                { icon: '🐮', label: 'Vegana' },
+                { icon: '🌱', label: 'Vegana' },
                 { icon: '🌾', label: 'Gluten Free' },
                 { icon: '🦠', label: 'Con Probióticos' },
               ].map(value => (
