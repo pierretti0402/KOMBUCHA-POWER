@@ -71,6 +71,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Error creando pedido' }, { status: 500 })
     }
 
+    // Decrement stock per flavor based on ordered units
+    const flavorTotals: Record<string, number> = {}
+    for (const item of items as Array<{ flavors: Array<{ flavorName: string; count: number }>; quantity: number }>) {
+      for (const flavor of item.flavors) {
+        flavorTotals[flavor.flavorName] = (flavorTotals[flavor.flavorName] || 0) + flavor.count * item.quantity
+      }
+    }
+
+    for (const [flavorName, units] of Object.entries(flavorTotals)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: product } = await (supabase as any)
+        .from('products')
+        .select('id, stock')
+        .eq('flavor', flavorName)
+        .single()
+
+      if (product) {
+        const newStock = Math.max(0, product.stock - units)
+        await (supabase as any).from('products').update({ stock: newStock }).eq('id', product.id)
+        await (supabase as any).from('stock_movements').insert({
+          product_id: product.id,
+          type: 'out',
+          quantity: units,
+          notes: `Pedido ${order.id.slice(0, 8)} — ${customer_name}`,
+          date: new Date().toISOString().split('T')[0],
+        })
+      }
+    }
+
     return NextResponse.json({ success: true, order })
   } catch (error) {
     console.error(error)

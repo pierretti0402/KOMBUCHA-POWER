@@ -27,11 +27,18 @@ interface FlavorModalProps {
 function FlavorModal({ pack, products, onClose }: FlavorModalProps) {
   const { addPack, setIsOpen } = useCart()
 
-  // Initialize with equal distribution across flavors
+  // Stock per flavor name
+  const stockByFlavor: Record<string, number> = {}
+  products.forEach(p => { stockByFlavor[p.flavor] = p.stock })
+
+  // Total stock available across all flavors
+  const totalStock = Object.values(stockByFlavor).reduce((a, b) => a + b, 0)
+
+  // Initialize with equal distribution across flavors with stock
   const flavorNames = Object.keys(FLAVOR_META)
   const initial: Record<string, number> = {}
   flavorNames.forEach((f, i) => {
-    initial[f] = i === 0 ? pack.size : 0
+    initial[f] = i === 0 && (stockByFlavor[f] ?? 0) > 0 ? Math.min(pack.size, stockByFlavor[f] ?? 0) : 0
   })
   const [counts, setCounts] = useState<Record<string, number>>(initial)
 
@@ -44,11 +51,18 @@ function FlavorModal({ pack, products, onClose }: FlavorModalProps) {
       const next = prev[flavor] + delta
       if (next < 0) return prev
       if (delta > 0 && remaining <= 0) return prev
+      if (delta > 0 && next > (stockByFlavor[flavor] ?? 0)) return prev
       return { ...prev, [flavor]: next }
     })
   }
 
+  const notEnoughStock = totalStock < pack.size
+
   const handleAdd = () => {
+    if (notEnoughStock) {
+      toast.error('Stock insuficiente para este pack')
+      return
+    }
     if (!isFull) {
       toast.error(`Faltan ${remaining} unidades por elegir`)
       return
@@ -119,12 +133,15 @@ function FlavorModal({ pack, products, onClose }: FlavorModalProps) {
             const meta = FLAVOR_META[flavorName]
             const imageUrl = products.find(p => p.flavor === flavorName)?.image_url ?? null
             const count = counts[flavorName]
-            const canAdd = remaining > 0
+            const flavorStock = stockByFlavor[flavorName] ?? 0
+            const outOfStock = flavorStock === 0
+            const canAdd = remaining > 0 && count < flavorStock
 
             return (
               <div
                 key={flavorName}
                 className={`flex items-center gap-4 p-3 rounded-2xl border-2 transition-colors ${
+                  outOfStock ? 'border-gray-100 bg-gray-50 opacity-60' :
                   count > 0 ? 'border-[#FF6B9D]/40 bg-pink-50' : 'border-gray-100 bg-white'
                 }`}
               >
@@ -142,9 +159,13 @@ function FlavorModal({ pack, products, onClose }: FlavorModalProps) {
                 {/* Name */}
                 <div className="flex-1 min-w-0">
                   <p className="font-black text-gray-900 text-sm leading-tight">{flavorName}</p>
-                  {count > 0 && (
+                  {outOfStock ? (
+                    <p className="text-xs text-red-500 font-bold mt-0.5">Sin stock</p>
+                  ) : flavorStock <= 5 ? (
+                    <p className="text-xs text-orange-500 font-bold mt-0.5">¡Solo {flavorStock} disponibles!</p>
+                  ) : count > 0 ? (
                     <p className="text-xs text-[#FF6B9D] font-bold mt-0.5">{count} unidad{count !== 1 ? 'es' : ''}</p>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Counter */}
@@ -172,10 +193,18 @@ function FlavorModal({ pack, products, onClose }: FlavorModalProps) {
 
         {/* Footer */}
         <div className="px-5 pb-6 space-y-3">
+          {notEnoughStock && (
+            <p className="text-center text-xs text-red-500 font-bold bg-red-50 rounded-xl py-2">
+              ⚠️ Stock insuficiente para este pack ({totalStock} unidades disponibles en total)
+            </p>
+          )}
           <button
             onClick={handleAdd}
+            disabled={notEnoughStock}
             className={`w-full flex items-center justify-center gap-3 font-black text-lg py-4 rounded-full shadow-lg transition-all ${
-              isFull
+              notEnoughStock
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : isFull
                 ? 'bg-[#FF6B9D] text-white hover:bg-opacity-90'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}
@@ -199,6 +228,8 @@ interface ShopProps {
 
 export default function Shop({ products }: ShopProps) {
   const [selectedPack, setSelectedPack] = useState<typeof PACKS[number] | null>(null)
+
+  const totalStock = products.reduce((sum, p) => sum + p.stock, 0)
 
   return (
     <section id="tienda" className="py-20 bg-gray-50">
@@ -229,14 +260,15 @@ export default function Shop({ products }: ShopProps) {
           {PACKS.map(pack => {
             const pricePerUnit = Math.round(pack.price / pack.size)
             const cashPrice = Math.round(pack.price * 0.9)
+            const packAvailable = totalStock >= pack.size
 
             return (
               <div
                 key={pack.size}
-                className={`relative bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col cursor-pointer ${
-                  pack.popular ? 'ring-2 ring-[#FF6B9D]' : ''
-                }`}
-                onClick={() => setSelectedPack(pack)}
+                className={`relative bg-white rounded-3xl overflow-hidden shadow-md transition-all duration-300 flex flex-col ${
+                  packAvailable ? 'hover:shadow-xl hover:-translate-y-1 cursor-pointer' : 'opacity-60 cursor-not-allowed'
+                } ${pack.popular ? 'ring-2 ring-[#FF6B9D]' : ''}`}
+                onClick={() => packAvailable && setSelectedPack(pack)}
               >
                 {pack.popular && (
                   <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-[#FF6B9D] text-white text-xs font-black px-3 py-1 rounded-full whitespace-nowrap z-10">
@@ -280,10 +312,15 @@ export default function Shop({ products }: ShopProps) {
                     </p>
                   </div>
 
-                  <button className="mt-4 w-full flex items-center justify-center gap-2 bg-gray-900 text-white font-bold py-3 rounded-full hover:bg-gray-700 transition-colors text-sm">
-                    <ShoppingCart size={15} />
-                    Elegir sabores
-                  </button>
+                  <button
+                  disabled={!packAvailable}
+                  className={`mt-4 w-full flex items-center justify-center gap-2 font-bold py-3 rounded-full transition-colors text-sm ${
+                    packAvailable ? 'bg-gray-900 text-white hover:bg-gray-700' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <ShoppingCart size={15} />
+                  {packAvailable ? 'Elegir sabores' : 'Sin stock'}
+                </button>
                 </div>
               </div>
             )

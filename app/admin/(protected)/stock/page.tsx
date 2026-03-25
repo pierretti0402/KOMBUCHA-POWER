@@ -154,6 +154,8 @@ export default function StockPage() {
   const [loading, setLoading] = useState(true)
   const [editingPrice, setEditingPrice] = useState<string | null>(null)
   const [priceForm, setPriceForm] = useState({ cost_price: '', sale_price: '' })
+  const [editingStock, setEditingStock] = useState<string | null>(null)
+  const [stockValue, setStockValue] = useState('')
 
   const fetchData = useCallback(async () => {
     const [prodRes, movRes] = await Promise.all([
@@ -166,6 +168,29 @@ export default function StockPage() {
   }, [supabase])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  const handleSaveStock = async (product: Product) => {
+    const newStock = parseInt(stockValue)
+    if (isNaN(newStock) || newStock < 0) return
+    const diff = newStock - product.stock
+    const { error } = await supabase.from('products').update({ stock: newStock }).eq('id', product.id)
+    if (!error) {
+      if (diff !== 0) {
+        await supabase.from('stock_movements').insert({
+          product_id: product.id,
+          type: 'adjustment',
+          quantity: Math.abs(diff),
+          notes: `Ajuste manual: ${product.stock} → ${newStock}`,
+          date: new Date().toISOString().split('T')[0],
+        })
+      }
+      toast.success('Stock actualizado ✅')
+      setEditingStock(null)
+      fetchData()
+    } else {
+      toast.error('Error al guardar')
+    }
+  }
 
   const handleSavePrice = async (productId: string) => {
     const { error } = await supabase.from('products').update({
@@ -241,10 +266,31 @@ export default function StockPage() {
                       <td className="px-4 py-3 font-black text-gray-900">{p.flavor}</td>
                       <td className="px-4 py-3 font-semibold text-gray-600">{p.presentation}</td>
                       <td className="px-4 py-3">
-                        <span className={`font-black text-lg ${p.stock === 0 ? 'text-red-500' : isLow ? 'text-yellow-600' : 'text-gray-900'}`}>
-                          {p.stock}
-                        </span>
-                        {isLow && <AlertTriangle size={14} className="inline ml-1 text-red-500" />}
+                        {editingStock === p.id ? (
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number" min="0" value={stockValue}
+                              onChange={e => setStockValue(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') handleSaveStock(p); if (e.key === 'Escape') setEditingStock(null) }}
+                              autoFocus
+                              className="w-20 px-2 py-1 rounded-lg border-2 border-[#FF6B9D] outline-none text-sm font-semibold"
+                            />
+                            <button onClick={() => handleSaveStock(p)} className="bg-green-100 text-green-700 font-bold text-xs px-2 py-1 rounded-full hover:bg-green-200">✓</button>
+                            <button onClick={() => setEditingStock(null)} className="bg-gray-100 text-gray-600 font-bold text-xs px-2 py-1 rounded-full hover:bg-gray-200">✕</button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => { setEditingStock(p.id); setStockValue(String(p.stock)) }}
+                            className="flex items-center gap-1 group"
+                            title="Editar stock"
+                          >
+                            <span className={`font-black text-lg ${p.stock === 0 ? 'text-red-500' : isLow ? 'text-yellow-600' : 'text-gray-900'}`}>
+                              {p.stock}
+                            </span>
+                            {isLow && <AlertTriangle size={14} className="text-red-500" />}
+                            <Edit2 size={12} className="text-gray-300 group-hover:text-gray-500 ml-1 transition-colors" />
+                          </button>
+                        )}
                       </td>
                       <td className="px-4 py-3 font-semibold text-gray-500">{p.min_stock}</td>
                       <td className="px-4 py-3">
