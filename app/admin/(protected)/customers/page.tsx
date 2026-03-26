@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { Search, Plus, Edit2, X, Save } from 'lucide-react'
+import { Search, Plus, Edit2, X, Save, Trash2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import type { Customer } from '@/types/database'
@@ -48,6 +48,17 @@ export default function CustomersPage() {
       setShowAddModal(false)
       setNewCustomer({ name: '', phone: '', email: '', address: '', notes: '', tags: [] })
       fetchCustomers()
+    }
+  }
+
+  const deleteCustomer = async (customerId: string, customerName: string) => {
+    if (!confirm(`¿Eliminar a ${customerName} permanentemente? Esta acción no se puede deshacer.`)) return
+    const { error } = await supabase.from('customers').delete().eq('id', customerId)
+    if (!error) {
+      toast.success('Cliente eliminado ✅')
+      setCustomers(prev => prev.filter(c => c.id !== customerId))
+    } else {
+      toast.error('Error al eliminar')
     }
   }
 
@@ -198,12 +209,20 @@ export default function CustomersPage() {
                         </button>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => { setEditingId(customer.id); setEditForm(customer) }}
-                        className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
-                      >
-                        <Edit2 size={14} />
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => { setEditingId(customer.id); setEditForm(customer) }}
+                          className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          onClick={() => deleteCustomer(customer.id, customer.name)}
+                          className="p-1.5 bg-red-50 text-red-400 rounded-lg hover:bg-red-100 hover:text-red-600 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>

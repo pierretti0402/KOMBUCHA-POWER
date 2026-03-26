@@ -31,6 +31,36 @@ export default function OrdersPage() {
     if (!error) {
       toast.success('Estado actualizado ✅')
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o))
+
+      // Restore stock when cancelling an order
+      if (status === 'cancelled') {
+        const order = orders.find(o => o.id === orderId)
+        if (order && Array.isArray(order.items)) {
+          const flavorTotals: Record<string, number> = {}
+          for (const item of order.items as { flavors?: { flavorName: string; count: number }[]; quantity: number }[]) {
+            if (item.flavors) {
+              for (const f of item.flavors) {
+                flavorTotals[f.flavorName] = (flavorTotals[f.flavorName] || 0) + f.count * item.quantity
+              }
+            }
+          }
+          for (const [flavorName, units] of Object.entries(flavorTotals)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: product } = await (supabase as any).from('products').select('id, stock').eq('flavor', flavorName).single()
+            if (product) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await (supabase as any).from('products').update({ stock: product.stock + units }).eq('id', product.id)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await (supabase as any).from('stock_movements').insert({
+                product_id: product.id,
+                type: 'in',
+                quantity: units,
+                reason: `Restauración por cancelación de pedido ${orderId.slice(0, 8)}`,
+              })
+            }
+          }
+        }
+      }
     }
   }
 

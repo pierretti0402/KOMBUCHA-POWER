@@ -331,9 +331,6 @@ export default function Cart() {
                   {isSaving ? 'Un momento...' : 'Continuar'}
                   {!isSaving && <ArrowRight size={20} />}
                 </button>
-                <p className="text-center text-xs text-gray-400 font-semibold">
-                  Tu email solo se usa para recordarte tu pedido si lo dejás sin completar.
-                </p>
               </div>
             ) : (
               /* ── Step 2: delivery + payment + WhatsApp ── */
