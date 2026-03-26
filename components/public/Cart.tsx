@@ -8,6 +8,27 @@ import { formatCurrency } from '@/lib/utils'
 import { FLAVOR_META } from '@/components/public/Flavors'
 import { supabase } from '@/lib/supabase'
 
+const PICKUP_LOCATIONS = [
+  {
+    id: 'tigre',
+    label: 'Pick Up Tigre',
+    address: 'Williams 1809, Rincón de Milberg',
+    hours: 'Lunes a Viernes 10:00 a 17:00 hs',
+  },
+  {
+    id: 'nordelta',
+    label: 'Pick Up Nordelta',
+    address: 'Barrio Sendero',
+    hours: 'Lunes a Viernes 10:00 a 17:00 hs y Sábado 10:00 a 13:00 hs',
+  },
+  {
+    id: 'caba',
+    label: 'Pick Up CABA',
+    address: 'Castillo 815, CABA',
+    hours: 'Lunes a Viernes 10:00 a 17:00 hs',
+  },
+]
+
 export default function Cart() {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, total, itemCount } = useCart()
 
@@ -17,9 +38,14 @@ export default function Cart() {
 
   // Step 2 fields
   const [customerPhone, setCustomerPhone] = useState('')
-  const [customerAddress, setCustomerAddress] = useState('')
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery')
   const [paymentMethod, setPaymentMethod] = useState<'transfer' | 'cash'>('transfer')
+  // Pickup
+  const [selectedPickup, setSelectedPickup] = useState('')
+  // Delivery
+  const [deliveryStreet, setDeliveryStreet] = useState('')
+  const [deliveryCity, setDeliveryCity] = useState('')
+  const [deliveryPostalCode, setDeliveryPostalCode] = useState('')
 
   const [step, setStep] = useState<1 | 2>(1)
   const [abandonedCartId, setAbandonedCartId] = useState<string | null>(null)
@@ -54,6 +80,16 @@ export default function Cart() {
     for (const f of item.flavors) {
       flavorTotals[f.flavorName] = (flavorTotals[f.flavorName] || 0) + f.count * item.quantity
     }
+  }
+
+  // Build the full address string for WhatsApp and Supabase
+  const buildAddress = () => {
+    if (deliveryType === 'pickup') {
+      const loc = PICKUP_LOCATIONS.find(l => l.id === selectedPickup)
+      return loc ? `${loc.label} — ${loc.address}` : 'Pick Up (a coordinar)'
+    }
+    const parts = [deliveryStreet, deliveryCity, deliveryPostalCode ? `CP ${deliveryPostalCode}` : ''].filter(Boolean)
+    return parts.join(', ')
   }
 
   // Step 1 → validate stock + save abandoned cart → step 2
@@ -113,18 +149,21 @@ export default function Cart() {
 
   // Step 2 → open WhatsApp immediately (sync), then save to DB in background
   const handleWhatsApp = () => {
+    if (deliveryType === 'pickup' && !selectedPickup) {
+      alert('Por favor seleccioná un punto de Pick Up')
+      return
+    }
+
     const displayTotal = paymentMethod === 'cash' ? cashTotal : total
     const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5491135170335'
+    const fullAddress = buildAddress()
 
     // Build message synchronously
     let msg = `¡Hola Power Kombucha! ⚡🍹 Quiero hacer el siguiente pedido:\n\n`
     msg += `*Cliente:* ${customerName}\n`
     if (customerPhone.trim()) msg += `*Teléfono:* ${customerPhone}\n`
     if (customerEmail.trim()) msg += `*Email:* ${customerEmail}\n`
-    const addr = deliveryType === 'pickup'
-      ? `PICK UP (${customerAddress || 'a coordinar'})`
-      : customerAddress
-    if (addr) msg += `*Dirección:* ${addr}\n`
+    if (fullAddress) msg += `*${deliveryType === 'pickup' ? 'Pick Up' : 'Dirección'}:* ${fullAddress}\n`
     msg += `*Pago:* ${paymentMethod === 'cash' ? '💵 Efectivo (10% OFF)' : '🏦 Transferencia'}\n\n`
     msg += `*Pedido:*\n`
 
@@ -152,9 +191,7 @@ export default function Cart() {
       customer_name: customerName.trim(),
       customer_phone: customerPhone.trim(),
       customer_email: customerEmail.trim(),
-      customer_address: deliveryType === 'pickup'
-        ? `PICK UP (${customerAddress || 'a coordinar'})`
-        : customerAddress,
+      customer_address: fullAddress,
       items: items.map(item => ({
         packLabel: item.packLabel,
         packSize: item.packSize,
@@ -370,6 +407,7 @@ export default function Cart() {
                   className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold text-sm transition-colors"
                 />
 
+                {/* Delivery type toggle */}
                 <div className="flex gap-3">
                   <button
                     onClick={() => setDeliveryType('delivery')}
@@ -385,13 +423,62 @@ export default function Cart() {
                   </button>
                 </div>
 
-                <input
-                  type="text"
-                  placeholder={deliveryType === 'delivery' ? 'Dirección de envío' : 'Punto de pick up preferido'}
-                  value={customerAddress}
-                  onChange={e => setCustomerAddress(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold text-sm transition-colors"
-                />
+                {deliveryType === 'pickup' ? (
+                  /* ── Pickup location cards ── */
+                  <div className="space-y-2">
+                    {PICKUP_LOCATIONS.map(loc => (
+                      <button
+                        key={loc.id}
+                        onClick={() => setSelectedPickup(loc.id)}
+                        className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all ${
+                          selectedPickup === loc.id
+                            ? 'border-[#FF6B9D] bg-pink-50'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
+                            selectedPickup === loc.id ? 'border-[#FF6B9D]' : 'border-gray-300'
+                          }`}>
+                            {selectedPickup === loc.id && (
+                              <div className="w-2 h-2 rounded-full bg-[#FF6B9D]" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-black text-sm text-gray-900">📍 {loc.label}</p>
+                            <p className="text-xs font-semibold text-gray-500">{loc.address}</p>
+                            <p className="text-xs text-gray-400">{loc.hours}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  /* ── Delivery address fields ── */
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Calle y número *"
+                      value={deliveryStreet}
+                      onChange={e => setDeliveryStreet(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold text-sm transition-colors"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Localidad *"
+                      value={deliveryCity}
+                      onChange={e => setDeliveryCity(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold text-sm transition-colors"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Código postal"
+                      value={deliveryPostalCode}
+                      onChange={e => setDeliveryPostalCode(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold text-sm transition-colors"
+                    />
+                  </div>
+                )}
 
                 <button
                   onClick={handleWhatsApp}
