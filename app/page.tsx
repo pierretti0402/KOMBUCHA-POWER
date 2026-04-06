@@ -22,11 +22,13 @@ async function getPageData() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  const [productsRes, faqRes, pickupRes, contentRes] = await Promise.all([
+  const [productsRes, faqRes, pickupRes, contentRes, pricingRes] = await Promise.all([
     supabase.from('products').select('*').eq('active', true).order('flavor').order('presentation'),
     supabase.from('faq').select('*').eq('active', true).order('order'),
     supabase.from('pickup_points').select('*').eq('active', true),
     supabase.from('site_content').select('*'),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from('pricing').select('key, value'),
   ])
 
   const content: Record<string, string> = {}
@@ -35,16 +37,30 @@ async function getPageData() {
     content[item.key] = item.value
   })
 
+  const pricingMap: Record<string, number> = {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  pricingRes.data?.forEach((item: any) => {
+    pricingMap[item.key] = item.value
+  })
+
+  const packPrices = {
+    pack3:  pricingMap['pack_price_3']  || 12000,
+    pack6:  pricingMap['pack_price_6']  || 21000,
+    pack12: pricingMap['pack_price_12'] || 40000,
+    pack24: pricingMap['pack_price_24'] || 74000,
+  }
+
   return {
     products: productsRes.data || [],
     faqs: faqRes.data || [],
     pickupPoints: pickupRes.data || [],
     content,
+    packPrices,
   }
 }
 
 export default async function HomePage() {
-  const { products, faqs, pickupPoints, content } = await getPageData()
+  const { products, faqs, pickupPoints, content, packPrices } = await getPageData()
 
   return (
     <CartProvider>
@@ -52,7 +68,7 @@ export default async function HomePage() {
       <main>
         <Hero />
         <Flavors products={products} />
-        <Shop products={products} />
+        <Shop products={products} packPrices={packPrices} />
         <WhatIsKombucha />
         <WhereToFind
           pickupPoints={pickupPoints}

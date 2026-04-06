@@ -9,17 +9,17 @@ import { formatCurrency } from '@/lib/utils'
 import { FLAVOR_META } from '@/components/public/Flavors'
 import toast from 'react-hot-toast'
 
-// ─── Pack definitions ──────────────────────────────────────────────────────────
-export const PACKS = [
-  { size: 3,  label: 'Pack x3',  price: 12000, popular: false },
-  { size: 6,  label: 'Pack x6',  price: 20000, popular: true  },
-  { size: 12, label: 'Pack x12', price: 36000, popular: false },
-  { size: 24, label: 'Pack x24', price: 65000, popular: false },
-] as const
+// ─── Pack type ─────────────────────────────────────────────────────────────────
+export interface Pack {
+  size: number
+  label: string
+  price: number
+  popular: boolean
+}
 
 // ─── Flavor Mix Modal ──────────────────────────────────────────────────────────
 interface FlavorModalProps {
-  pack: typeof PACKS[number]
+  pack: Pack
   products: Product[]
   onClose: () => void
 }
@@ -224,10 +224,17 @@ function FlavorModal({ pack, products, onClose }: FlavorModalProps) {
 // ─── Main Shop component ───────────────────────────────────────────────────────
 interface ShopProps {
   products: Product[]
+  packPrices: { pack3: number; pack6: number; pack12: number; pack24: number }
 }
 
-export default function Shop({ products }: ShopProps) {
-  const [selectedPack, setSelectedPack] = useState<typeof PACKS[number] | null>(null)
+export default function Shop({ products, packPrices }: ShopProps) {
+  const packs: Pack[] = [
+    { size: 3,  label: 'Pack x3',  price: packPrices.pack3,  popular: false },
+    { size: 6,  label: 'Pack x6',  price: packPrices.pack6,  popular: true  },
+    { size: 12, label: 'Pack x12', price: packPrices.pack12, popular: false },
+    { size: 24, label: 'Pack x24', price: packPrices.pack24, popular: false },
+  ]
+  const [selectedPack, setSelectedPack] = useState<Pack | null>(null)
 
   const totalStock = products.reduce((sum, p) => sum + p.stock, 0)
 
@@ -257,7 +264,7 @@ export default function Shop({ products }: ShopProps) {
 
         {/* Pack cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-          {PACKS.map(pack => {
+          {packs.map(pack => {
             const pricePerUnit = Math.round(pack.price / pack.size)
             const cashPrice = Math.round(pack.price * 0.9)
             const packAvailable = totalStock >= pack.size

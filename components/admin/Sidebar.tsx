@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Package, ShoppingBag, Users, UserPlus,
-  DollarSign, Megaphone, Settings, LogOut, Menu, X, ExternalLink,
+  DollarSign, Megaphone, Settings, LogOut, Menu, X, ExternalLink, Tag,
 } from 'lucide-react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { href: '/admin/customers', icon: Users, label: 'Clientes' },
   { href: '/admin/leads', icon: UserPlus, label: 'Leads' },
   { href: '/admin/finances', icon: DollarSign, label: 'Finanzas' },
+  { href: '/admin/pricing', icon: Tag, label: 'Precios' },
   { href: '/admin/marketing', icon: Megaphone, label: 'Marketing' },
   { href: '/admin/settings', icon: Settings, label: 'Configuración' },
 ]
