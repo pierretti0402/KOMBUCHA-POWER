@@ -44,7 +44,12 @@ export default function PricingPage() {
 
   const fetchPricing = useCallback(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any).from('pricing').select('key, value, label')
+    const { data, error } = await (supabase as any).from('pricing').select('key, value, label')
+    if (error) {
+      toast.error(`Error al cargar precios: ${error.message}`)
+      setLoading(false)
+      return
+    }
     if (data) {
       const map: Record<string, number> = {}
       ;(data as PricingRow[]).forEach(row => { map[row.key] = row.value })
@@ -66,22 +71,24 @@ export default function PricingPage() {
 
   const handleSave = async () => {
     setSaving(true)
+    const now = new Date().toISOString()
     const rows = [
-      { key: 'cost_per_unit',          value: costPerUnit,              label: 'Costo de la lata (por unidad)' },
-      { key: 'shipping_cost_per_unit', value: shippingCostPerUnit,      label: 'Costo de traslado (por unidad)' },
-      { key: 'price_b2c',              value: priceB2C,                 label: 'Precio B2C (precio al público)' },
-      { key: 'price_b2b',              value: priceB2B,                 label: 'Precio B2B (precio mayorista)' },
-      { key: 'pack_price_3',           value: packPrices.pack_price_3,  label: 'Pack 3 unidades' },
-      { key: 'pack_price_6',           value: packPrices.pack_price_6,  label: 'Pack 6 unidades' },
-      { key: 'pack_price_12',          value: packPrices.pack_price_12, label: 'Pack 12 unidades' },
-      { key: 'pack_price_24',          value: packPrices.pack_price_24, label: 'Pack 24 unidades' },
+      { key: 'cost_per_unit',          value: costPerUnit,              label: 'Costo de la lata (por unidad)',  updated_at: now },
+      { key: 'shipping_cost_per_unit', value: shippingCostPerUnit,      label: 'Costo de traslado (por unidad)', updated_at: now },
+      { key: 'price_b2c',              value: priceB2C,                 label: 'Precio B2C (precio al público)', updated_at: now },
+      { key: 'price_b2b',              value: priceB2B,                 label: 'Precio B2B (precio mayorista)',  updated_at: now },
+      { key: 'pack_price_3',           value: packPrices.pack_price_3,  label: 'Pack 3 unidades',                updated_at: now },
+      { key: 'pack_price_6',           value: packPrices.pack_price_6,  label: 'Pack 6 unidades',                updated_at: now },
+      { key: 'pack_price_12',          value: packPrices.pack_price_12, label: 'Pack 12 unidades',               updated_at: now },
+      { key: 'pack_price_24',          value: packPrices.pack_price_24, label: 'Pack 24 unidades',               updated_at: now },
     ]
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any)
       .from('pricing')
-      .upsert(rows, { onConflict: 'key' })
+      .upsert(rows, { onConflict: 'key', ignoreDuplicates: false })
     if (error) {
-      toast.error('Error al guardar')
+      toast.error(`Error al guardar: ${error.message}`)
+      console.error('Pricing save error:', error)
     } else {
       toast.success('Precios actualizados ✅')
     }
