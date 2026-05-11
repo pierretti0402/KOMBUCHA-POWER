@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
-import { Fuzzy_Bubbles, Fredoka } from 'next/font/google'
+import { Fuzzy_Bubbles, Fredoka, Fraunces } from 'next/font/google'
 
 const fuzzyBubbles = Fuzzy_Bubbles({
   weight: ['400', '700'],
@@ -13,6 +13,12 @@ const fredoka = Fredoka({
   weight: ['400', '600'],
   subsets: ['latin'],
   variable: '--font-fredoka',
+})
+
+const fraunces = Fraunces({
+  weight: ['700', '900'],
+  subsets: ['latin'],
+  variable: '--font-fraunces',
 })
 
 export const metadata: Metadata = {
@@ -32,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" className={`${fuzzyBubbles.variable} ${fredoka.variable}`}>
+    <html lang="es" className={`${fuzzyBubbles.variable} ${fredoka.variable} ${fraunces.variable}`}>
       <body>
         {children}
         <Toaster

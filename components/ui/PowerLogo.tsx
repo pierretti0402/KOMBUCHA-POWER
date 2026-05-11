@@ -7,11 +7,6 @@ interface PowerLogoProps {
   circleColor?: string
 }
 
-/**
- * Power Kombucha brand logo.
- * Light blue/mint circular badge with "power" in pink Fredoka One,
- * "KOMBUCHA" in pink bold caps underneath.
- */
 export default function PowerLogo({
   size = 'sm',
   circleColor = '#B3E5FC',
@@ -19,28 +14,21 @@ export default function PowerLogo({
   const isLg = size === 'lg'
 
   return (
-    <div className={`flex flex-col items-center select-none ${isLg ? 'gap-2' : 'gap-0.5'}`}>
-      {/* Circular badge */}
-      <div
-        className={`flex items-center justify-center rounded-full shadow-md ${
-          isLg ? 'w-36 h-36' : 'w-10 h-10'
-        }`}
-        style={{ backgroundColor: circleColor }}
-      >
-        <span
-          className={`text-[#FF6B9D] font-black leading-none ${isLg ? 'text-5xl' : 'text-base'}`}
-          style={{ fontFamily: 'var(--font-fuzzy-bubbles), sans-serif' }}
-        >
-          power
-        </span>
-      </div>
-
-      {/* KOMBUCHA label */}
+    <div
+      className={`flex flex-col items-center justify-center rounded-full shadow-md select-none ${
+        isLg ? 'w-48 h-48' : 'w-12 h-12'
+      }`}
+      style={{ backgroundColor: circleColor }}
+    >
       <span
-        className={`text-[#FF6B9D] font-semibold tracking-widest leading-none ${
-          isLg ? 'text-2xl' : 'text-[9px]'
-        }`}
-        style={{ fontFamily: 'var(--font-fredoka), sans-serif' }}
+        className={`text-[#FF6B9D] font-black leading-none ${isLg ? 'text-5xl' : 'text-[13px]'}`}
+        style={{ fontFamily: 'var(--font-fraunces), serif' }}
+      >
+        power
+      </span>
+      <span
+        className={`text-[#FF6B9D] font-black leading-none tracking-widest ${isLg ? 'text-base' : 'text-[5px]'}`}
+        style={{ fontFamily: 'var(--font-fraunces), serif' }}
       >
         KOMBUCHA
       </span>
