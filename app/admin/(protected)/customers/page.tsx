@@ -7,6 +7,17 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import type { Customer } from '@/types/database'
 
+type B2BEstado = 'Activo' | 'Inactivo' | 'Prospecto' | 'En pausa'
+
+const ESTADO_OPTIONS: B2BEstado[] = ['Activo', 'Inactivo', 'Prospecto', 'En pausa']
+
+const ESTADO_COLORS: Record<B2BEstado, string> = {
+  'Activo':    'bg-green-100 text-green-700',
+  'Inactivo':  'bg-red-100 text-red-600',
+  'Prospecto': 'bg-yellow-100 text-yellow-700',
+  'En pausa':  'bg-gray-100 text-gray-500',
+}
+
 interface B2BCustomer {
   id: string
   nombre: string
@@ -15,10 +26,11 @@ interface B2BCustomer {
   email: string | null
   direccion: string | null
   notas: string | null
+  estado: B2BEstado | null
   created_at: string
 }
 
-const EMPTY_B2B = { nombre: '', empresa: '', telefono: '', email: '', direccion: '', notas: '' }
+const EMPTY_B2B = { nombre: '', empresa: '', telefono: '', email: '', direccion: '', notas: '', estado: 'Prospecto' as B2BEstado }
 
 export default function CustomersPage() {
   const supabase = createClientComponentClient()
@@ -271,6 +283,7 @@ export default function CustomersPage() {
                       <th className="px-4 py-3 font-black text-gray-600">Contacto</th>
                       <th className="px-4 py-3 font-black text-gray-600">Dirección</th>
                       <th className="px-4 py-3 font-black text-gray-600">Notas</th>
+                      <th className="px-4 py-3 font-black text-gray-600">Estado</th>
                       <th className="px-4 py-3 font-black text-gray-600">Desde</th>
                       <th className="px-4 py-3 font-black text-gray-600">Acciones</th>
                     </tr>
@@ -346,6 +359,23 @@ export default function CustomersPage() {
                             />
                           ) : (
                             <p className="text-xs text-gray-400 font-semibold max-w-[140px] truncate">{c.notas || '—'}</p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {editingB2BId === c.id ? (
+                            <select
+                              value={editB2BForm.estado || 'Prospecto'}
+                              onChange={e => setEditB2BForm(f => ({ ...f, estado: e.target.value as B2BEstado }))}
+                              className="px-2 py-1 rounded-lg border border-gray-200 outline-none text-xs font-semibold bg-white"
+                            >
+                              {ESTADO_OPTIONS.map(opt => (
+                                <option key={opt} value={opt}>{opt}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${ESTADO_COLORS[(c.estado || 'Prospecto') as B2BEstado]}`}>
+                              {c.estado || 'Prospecto'}
+                            </span>
                           )}
                         </td>
                         <td className="px-4 py-3 font-semibold text-gray-500 whitespace-nowrap">{formatDate(c.created_at)}</td>
@@ -441,6 +471,18 @@ export default function CustomersPage() {
                 onChange={e => setNewB2B(f => ({ ...f, notas: e.target.value }))}
                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold resize-none"
               />
+              <div>
+                <label className="block text-sm font-bold text-gray-600 mb-1">Estado</label>
+                <select
+                  value={newB2B.estado}
+                  onChange={e => setNewB2B(f => ({ ...f, estado: e.target.value as B2BEstado }))}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#FF6B9D] outline-none font-semibold bg-white"
+                >
+                  {ESTADO_OPTIONS.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button
