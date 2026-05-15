@@ -56,7 +56,8 @@ function ManualOrderModal({ onClose, onSaved }: ManualOrderModalProps) {
         supabase.from('products').select('id, flavor, stock, sale_price').eq('active', true).order('flavor'),
       ])
       setB2bCustomers(b2bRes.data || [])
-      setProducts(prodRes.data || [])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setProducts((prodRes.data as any) || [])
       setLoadingData(false)
     }
     load()
